@@ -487,6 +487,11 @@ contextBridge.exposeInMainWorld('hermesDesktop', {
       createPr: repoPath => ipcRenderer.invoke('hermes:git:review:createPr', repoPath)
     }
   },
+  desktop: {
+    remote: options => ipcRenderer.invoke('hermes:desktop:remote', options),
+    pc: options => ipcRenderer.invoke('hermes:desktop:pc', options),
+    exec: options => ipcRenderer.invoke('hermes:desktop:exec', options)
+  },
   terminal: {
     attach: id => ipcRenderer.invoke('hermes:terminal:attach', id),
     cwd: id => ipcRenderer.invoke('hermes:terminal:cwd', id),
@@ -701,3 +706,4 @@ contextBridge.exposeInMainWorld('hermesDesktop', {
     return () => ipcRenderer.removeListener('hermes:open-find-bar', listener)
   }
 })
+
