@@ -27,13 +27,14 @@ registration changes are unfinished and are not included in this snapshot.
 - Latest-upstream renderer and native TypeScript checks passed.
 - Latest-upstream Windows build and ARM64 Linux build/package checks passed.
 - Focused remote IPC, Settings, login, signature, browser-policy and driver tests
-  passed; standalone plugin regression suite: 48 tests passed against the stock
+  passed; standalone plugin regression suite: 51 tests passed against the stock
   remote backend revision used by the prototype.
 - Earlier client revisions passed live Windows, Linux and Intel Mac terminal/file
   checks, Firefox isolated browsing on all three, and Chromium/Edge checks on
   Windows/Linux. These live results do not replace acceptance of updated builds.
 - Raspberry Pi 5 ARM64: first prototype connected to the canonical gateway and
-  executed normal terminal calls on the Pi. Updated client live acceptance pending.
+  executed normal terminal calls on the Pi. Updated client passed Unicode file
+  roundtrip and Firefox prepare/navigate/read/click through Example Domain to IANA.
 - Linux Wayland window discovery/accessibility worked, but exact-window capture
   remained unproven. General Linux PC input is not claimed verified.
 - Safari isolated adapter is experimental source only; live Mac acceptance and
@@ -50,3 +51,25 @@ control are not complete. Firefox Sync has not been verified.
 
 Use a separate prototype user-data directory. Do not replace a user's canonical
 backend files or disable Electron's sandbox to launch an unpacked Linux build.
+
+## October 2 morning checkpoint
+
+New Desktop chats receive plugin-owned guidance distinguishing ordinary terminal/file
+access on the conversation-owning device from cross-device tools. The former needs
+no destination ID; the latter requires target_device and command. List enrolled IDs
+with desktop_devices and {"action":"list"}. Existing chats retain their saved
+system prompts. All 51 regression checks passed against the stock backend.
+
+Scopuli live checks confirmed hostname/OS/cwd, reading local project source and
+creating directories. Quote paths containing spaces; the reported mkdir failure was
+resolved by shell quoting without a bridge code change.
+
+Normal per-user application launchers were installed on Scopuli, Intel Mac and
+Raspberry Pi, with profile backups and correct gateway history confirmed on all
+three. Windows shortcuts supply the working profile/private driver to its installed
+client. The Mac Applications launcher opens the unchanged client in Application
+Support with its working profile and driver. The Pi menu entry uses the existing
+profile-aware launcher and AppArmor-approved executable path; sandboxing remains
+on. Old Windows test builds were archived and original backend data preserved.
+These installations do not constitute published production installers. Windows/Mac
+retained their tested builds; Pi uses the updated upstream build.
