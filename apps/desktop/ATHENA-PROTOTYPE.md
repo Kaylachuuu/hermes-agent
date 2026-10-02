@@ -2,7 +2,7 @@
 
 Experimental implementation for a stock remote Hermes backend with client-local
 terminal/filesystem, browser, and native PC capabilities. The standalone backend
-plugin is https://github.com/Kaylachuuu/hermes-desktop-terminal.
+plugin is https://github.com/Kaylachuuu/hermes-desktop-bridge.
 
 The client source is based on upstream `10c6188de188871f64a88dd95bc6b262adb0c307`.
 This is a review prototype, not a production-ready permission boundary.
