@@ -348,7 +348,9 @@ export function registerTerminalIpc({
 
       shell = bashPath
       name = 'bash'
-      args = ['-c', command]
+      // Keep Windows argv short. Read the complete script before evaluating it,
+      // so commands inside it see EOF rather than consuming later script lines.
+      args = ['-c', 'eval "$(cat)"']
     } else {
       const terminalShell = terminalShellCommand()
       shell = terminalShell.command
@@ -364,7 +366,7 @@ export function registerTerminalIpc({
     }
 
     return await new Promise(resolve => {
-      execFile(
+      const child = execFile(
         shell,
         args,
         {
@@ -405,6 +407,10 @@ export function registerTerminalIpc({
           })
         }
       )
+      if (requestedShell === 'bash') {
+        child.stdin?.on('error', () => { /* execFile reports process failures. */ })
+        child.stdin?.end(command, 'utf8')
+      }
     })
   }
 
