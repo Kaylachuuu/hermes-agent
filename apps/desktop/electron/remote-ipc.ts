@@ -82,7 +82,28 @@ export function registerRemoteIpc(
       !event.sender.isDestroyed() &&
       scope(event.sender.id) === currentScope &&
       versions.get(event.sender.id) === version
-    if (payload.action === 'describe') return descriptor
+    if (payload.action === 'describe') return { ...descriptor, routingIdentityVersion: 1 }
+    if (payload.action === 'routing_identity') {
+      if (typeof payload.sessionId !== 'string' || !payload.sessionId ||
+          typeof args.challenge !== 'string' || !/^[a-f0-9]{64}$/.test(args.challenge) ||
+          typeof args.conversation !== 'string' || !args.conversation || args.conversation.length > 1024 ||
+          typeof args.authorize !== 'boolean') throw new Error('Invalid routing identity request.')
+      if (args.authorize) {
+        const choice = await dialog.showMessageBox(parent, {
+          type: 'question', title: 'Continue this conversation on this device?',
+          message: `Allow this conversation to use terminal and file tools on ${descriptor.name}?`,
+          detail: `Conversation: ${payload.sessionId}\nThis changes the conversation's local execution device. Future terminal and file requests will use this computer. Interrupted commands will not be replayed.`,
+          buttons: ['Cancel', 'Allow on this device'], defaultId: 0, cancelId: 0
+        })
+        if (choice.response !== 1 || !stillAuthorized()) throw new Error('Desktop handoff authorization was refused or the gateway changed. Stop and wait for the user.')
+      }
+      if (!stillAuthorized()) throw new Error('Desktop connection changed during identity verification.')
+      // Domain separated, fixed fields: this signature can never approve a command.
+      const proof = ['hermes-desktop-route-v1', args.challenge, args.conversation,
+        currentScope, id, descriptor.name, args.authorize]
+      return { ...descriptor, gatewayScope: currentScope, authorized: args.authorize,
+        signature: crypto.sign(null, Buffer.from(JSON.stringify(proof)), own.privateKey).toString('base64') }
+    }
     if (payload.action === 'status') {
       const enrollment = enrollments.get(event.sender.id)
       return { ...descriptor, receiving: !!enrollment, origins: enrollment?.origins ?? [] }
