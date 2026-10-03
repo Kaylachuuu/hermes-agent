@@ -31,6 +31,39 @@ import { deviceId, signRemoteCommand, type RemoteCommand } from './remote-author
 mocks.root = fs.mkdtempSync(path.join(os.tmpdir(), 'athena-remote-test-'))
 afterAll(() => fs.rmSync(mocks.root, { recursive: true, force: true }))
 
+test('routing proofs survive sender restarts and handoff requires native consent', async () => {
+  let gateway = 'route-gateway-one'
+  let executions = 0
+  registerRemoteIpc(() => gateway, async () => { executions++; return {} })
+  const invoke = (sender: number, authorize: boolean, challenge = 'a'.repeat(64)) =>
+    mocks.handlers.get('hermes:desktop:remote')!(
+      { sender: { id: sender, isDestroyed: () => false } },
+      { action: 'routing_identity', sessionId: 'visible-chat',
+        arguments: { challenge, conversation: 'durable-chat', authorize } }
+    )
+  const first = await invoke(900, false)
+  const restarted = await invoke(901, false, 'b'.repeat(64))
+  expect(first.id).toBe(restarted.id)
+  const proof = ['hermes-desktop-route-v1', 'b'.repeat(64), 'durable-chat',
+    restarted.gatewayScope, restarted.id, restarted.name, false]
+  expect(crypto.verify(null, Buffer.from(JSON.stringify(proof)), restarted.publicKey,
+    Buffer.from(restarted.signature, 'base64'))).toBe(true)
+  expect(crypto.verify(null, Buffer.from(JSON.stringify(proof)), restarted.publicKey,
+    Buffer.from(first.signature, 'base64'))).toBe(false)
+  mocks.responses.push(0)
+  await expect(invoke(901, true)).rejects.toThrow('refused')
+  mocks.responses.push(1)
+  expect((await invoke(901, true)).authorized).toBe(true)
+  let accept!: (choice: { response: number }) => void
+  mocks.pending = new Promise(resolve => { accept = resolve })
+  const pending = invoke(901, true)
+  gateway = 'route-gateway-two'
+  accept({ response: 1 })
+  await expect(pending).rejects.toThrow('gateway changed')
+  await expect(invoke(901, false, 'malformed')).rejects.toThrow('Invalid')
+  expect(executions).toBe(0)
+})
+
 test('native enrollment, cancellation, conversation grants, replay refusal and revocation', async () => {
   const executions: any[] = []
   let gateway = 'gateway-one'
