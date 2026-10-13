@@ -4232,15 +4232,15 @@ class BasePlatformAdapter(ABC):
     async def _play_tts_file(
         self, event: MessageEvent, text_content: str, tts_path: str, first: bool,
         metadata: dict[str, Any], record_delivery: Callable) -> bool:
-        """Play one synthesized TTS file. Returns True when the ORIGINAL reply text rode
-        along as a Telegram caption (first file, ≤1024 chars) so the text send is skipped."""
+        """Play one synthesized TTS file. Returns True when the text send is skipped: the reply rode
+        along as a Telegram caption (first file, ≤1024 chars), or ``voice.reply_text`` is false."""
         caption = None
         if first and self.platform == Platform.TELEGRAM and text_content and text_content[:1024] == text_content:
             caption = text_content
         tts_result = await self.play_tts(
             chat_id=event.source.chat_id, audio_path=tts_path, caption=caption, metadata=metadata)
         record_delivery(tts_result)
-        return bool(caption and getattr(tts_result, "success", False))
+        return bool((caption or not getattr(self, "_voice_reply_text", True)) and getattr(tts_result, "success", False))
 
     async def _record_delivery_obligation(
         self, event: MessageEvent, session_key: str, text_content: str,

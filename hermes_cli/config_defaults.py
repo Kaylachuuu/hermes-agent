@@ -1228,7 +1228,7 @@ DEFAULT_CONFIG = {
         "record_key": "ctrl+b",
         "submit_mode": "direct",  # TUI: direct submits immediately; draft = editable transcript
         "max_recording_seconds": 120,
-        "auto_tts": False,
+        "auto_tts": False, "reply_text": True,  # reply_text false: voice-message replies skip the text
         # Desktop remote clients call STT/TTS providers DIRECTLY (config + key fetched over
         # authenticated REST at session start) instead of relaying via the gateway.
         "client_direct": True,

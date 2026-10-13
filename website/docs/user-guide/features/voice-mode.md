@@ -337,6 +337,8 @@ These work in both Telegram and Discord (DMs and text channels):
 
 Voice mode setting is persisted across gateway restarts.
 
+When a voice reply is sent for a voice message, the reply text follows it as a separate message (on Telegram it rides along as the voice note's caption instead). Set `voice.reply_text: false` to send only the voice note; text messages still get text replies, and if speech synthesis fails the text is sent as usual.
+
 ### Platform Delivery
 
 | Platform | Format | Notes |
@@ -497,6 +499,7 @@ voice:
   record_key: "ctrl+b"            # Key to start/stop recording
   max_recording_seconds: 120       # Maximum recording length
   auto_tts: false                  # Auto-enable TTS when voice mode starts
+  reply_text: true                 # false: a voice reply to a voice message is sent without the text after it
   beep_enabled: true               # Play record start/stop beeps
   silence_threshold: 200           # RMS level (0-32767) below which counts as silence
   silence_duration: 3.0            # Seconds of silence before auto-stop

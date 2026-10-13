@@ -105,8 +105,9 @@ class GatewayVoiceMixin:
         self._toggle_adapter_auto_tts_set(adapter, chat_id, True, enable=mode != "off")
 
     def _sync_voice_mode_state_to_adapter(self, adapter) -> None:
-        """Restore persisted /voice state into a live adapter: ``_auto_tts_default`` from
-        ``voice.auto_tts``; enabled (voice_only/all) / disabled (off) sets from ``_voice_mode``."""
+        """Restore persisted /voice state into a live adapter: ``_auto_tts_default`` from ``voice.auto_tts``,
+        ``_voice_reply_text`` from ``voice.reply_text``; enabled (voice_only/all) / disabled (off) sets from
+        ``_voice_mode``."""
         platform = getattr(adapter, "platform", None)
         if not isinstance(platform, Platform):
             return
@@ -119,9 +120,12 @@ class GatewayVoiceMixin:
             return
         try:
             from hermes_cli.config import load_config  # lazy: no gateway -> hermes_cli module dep
-            auto_tts_default = bool((load_config().get("voice") or {}).get("auto_tts", False))
+            voice_cfg = load_config().get("voice") or {}
+            auto_tts_default = bool(voice_cfg.get("auto_tts", False))
+            # False: an auto voice reply to a voice message goes out without the text after it.
+            reply_text = voice_cfg.get("reply_text", True) is not False
         except Exception:
-            auto_tts_default = False
+            auto_tts_default, reply_text = False, True
         if hasattr(adapter, "_auto_tts_default"):
             # A2A never inherits the global speak default. The flag is written by
             # Desktop "Read replies aloud" / voice.auto_tts and is meant for human
@@ -132,6 +136,7 @@ class GatewayVoiceMixin:
                 adapter._auto_tts_default = False
             else:
                 adapter._auto_tts_default = auto_tts_default
+            adapter._voice_reply_text = reply_text
         prefix = self._voice_key(platform, "", profile=getattr(adapter, "_owner_profile", None))
         for chats, modes in chat_sets:
             chats.clear()
